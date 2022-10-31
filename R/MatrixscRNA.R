@@ -34,6 +34,7 @@ RnaArchRProject <- function(inputFiles,
   proj <- ArchRProject(ArrowFiles = paste0(sampleNames, ".arrow"),
                        outputDirectory = outputDirectory,
                        copyArrows = TRUE)
+  gc()
   return(proj)
 
 }
@@ -86,6 +87,7 @@ Matrix2ArchRArrow <- function(mat,
                                matrixName = matrixName
       )
   }
+  gc()
   return(paste0(name,".arrow"))
 }
 
@@ -109,6 +111,7 @@ Matrix2ArchRProject <- function(mat,
   proj <- ArchRProject(ArrowFiles = paste0(name, ".arrow"),
                        outputDirectory = outputDirectory,
                        copyArrows = TRUE)
+  gc()
   return(proj)
 }
 
@@ -157,7 +160,7 @@ createRNAarrow <- function(seRNA=NULL,
   o <- h5write(obj = name, file = outArrow, name = "Metadata/Sample")
   o <- h5write(obj = paste0(Sys.Date()), file = outArrow, name = "Metadata/Date")
   o <- h5closeAll()
-
+  gc()
   return(outArrow)
 }
 
@@ -548,7 +551,7 @@ addMatToArrow_ <- function(
   gc()
 
   o <- h5closeAll()
-
+  gc()
   return(0)
 
 }

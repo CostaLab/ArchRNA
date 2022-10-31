@@ -19,6 +19,7 @@ Imports:
   rhdf5,
   Matrix,
   glue,
+  irlba,
   dplyr,
   tidyr,
   assertthat
