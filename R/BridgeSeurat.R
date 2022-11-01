@@ -43,7 +43,11 @@ PartialSeurat <- function(project,
     includes <- c(includes, "meta.data")
   }
 
-  object <- Seurat::CreateSeuratObject(counts=counts, meta.data=meta_data, verbose=F)
+  object <- Seurat::CreateSeuratObject(counts=counts,
+                                       meta.data=meta_data,
+                                       min.cells = 0,
+                                       min.features = 0,
+                                       verbose=F)
 
   if("reducedDims" %in% includes){
     object[[reducedDims]] <- Seurat::CreateDimReducObject(reduction, key=reducedDims)

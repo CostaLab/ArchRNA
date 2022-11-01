@@ -27,7 +27,7 @@ DoHeatmapS <- function(project, useMatrix=NULL, assay=NULL, reduction=NULL, ...)
 
 
 #' @export
-FeaturePlotS <- function(project, useMatrix=NULL, assay=NULL, group.by=NULL, reduction=NULL, ...){
+FeaturePlotS <- function(project, useMatrix=NULL, assay=NULL, reduction=NULL, ...){
   if(is.null(useMatrix)){
     useMatrix = getAvailableMatrices(project)[1]
     warning(glue::glue("useMatrix is NULL, use first matrix {useMatrix}!"))
@@ -44,7 +44,7 @@ FeaturePlotS <- function(project, useMatrix=NULL, assay=NULL, group.by=NULL, red
 }
 
 #' @export
-RidgePlotS <-function(project, useMatrix=NULL, assay=NULL, group.by=NULL, ...){
+RidgePlotS <-function(project, useMatrix=NULL, assay=NULL, ...){
   if(is.null(useMatrix)){
     useMatrix = getAvailableMatrices(project)[1]
     warning(glue::glue("useMatrix is NULL, use first matrix {useMatrix}!"))
@@ -55,7 +55,7 @@ RidgePlotS <-function(project, useMatrix=NULL, assay=NULL, group.by=NULL, ...){
 }
 
 #' @export
-DotPlotS <- function(project, useMatrix=NULL, assay=NULL, group.by=NULL, ...){
+DotPlotS <- function(project, useMatrix=NULL, assay=NULL, ...){
   if(is.null(useMatrix)){
     useMatrix = getAvailableMatrices(project)[1]
     warning(glue::glue("useMatrix is NULL, use first matrix {useMatrix}!"))
@@ -67,18 +67,19 @@ DotPlotS <- function(project, useMatrix=NULL, assay=NULL, group.by=NULL, ...){
 }
 
 #' @export
-VlnPlotS <- function(project, useMatrix=NULL, assay=NULL, group.by=NULL, ...){
+VlnPlotS <- function(project, features=c(), useMatrix=NULL, assay=NULL, ...){
 
   ### if vln in meta.data, there's no need to retrieve count matrix
-  if(is.null(useMatrix)){
+  if(is.null(useMatrix) & all(features %ni% colnames(project@cellColData))){
     useMatrix = getAvailableMatrices(project)[1]
     warning(glue::glue("useMatrix is NULL, use first matrix {useMatrix}!"))
   }
   object <- PartialSeurat(project, useMatrix=useMatrix, assay=assay)
-  p <- Seurat::VlnPlot(object, assay="RNA", slot=assay, ...)
+  p <- Seurat::VlnPlot(object, features=features, assay="RNA", slot=assay, ...)
+  rm(object)
+  gc()
   return(p)
 }
-
 
 #' @export
 scProportionPlotS <- function(project,

@@ -31,10 +31,12 @@ RnaArchRProject <- function(inputFiles,
                             matrixName=matrixName
     )
   }
-
   proj <- ArchRProject(ArrowFiles = paste0(sampleNames, ".arrow"),
                        outputDirectory = outputDirectory,
                        copyArrows = TRUE)
+
+  proj@cellMetadata[["genes"]] <- elementMetadata(seRNA)$name
+
   gc()
   return(proj)
 
@@ -89,8 +91,11 @@ Matrix2ArchRArrow <- function(mat,
                                matrixName = matrixName
       )
   }
+  ele <- elementMetadata(seRNA)
+  rm(seRNA)
   gc()
-  return(paste0(name,".arrow"))
+
+  return(ele)
 }
 
 #' @export
@@ -105,7 +110,7 @@ Matrix2ArchRProject <- function(mat,
   if(is.null(outputDirectory)){
     ArchR:::.logError("outputDirectory is NULL, please specify!")
   }
-  Matrix2ArchRArrow(mat=mat,
+  ele <- Matrix2ArchRArrow(mat=mat,
                     name=name,
                     meta.data=meta.data,
                     matrixName=matrixName,
@@ -114,6 +119,7 @@ Matrix2ArchRProject <- function(mat,
   proj <- ArchRProject(ArrowFiles = paste0(name, ".arrow"),
                        outputDirectory = outputDirectory,
                        copyArrows = TRUE)
+  proj@cellMetadata[["genes"]] <- ele$name
   gc()
   return(proj)
 }
