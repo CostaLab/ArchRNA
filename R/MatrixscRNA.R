@@ -7,6 +7,7 @@
   return("UNKNOWN")
 }
 
+#' @export
 RnaArchRProject <- function(inputFiles,
                             sampleNames,
                             outputDirectory=NULL,
@@ -39,6 +40,7 @@ RnaArchRProject <- function(inputFiles,
 
 }
 
+#' @export
 Matrix2ArchRArrow <- function(mat,
                               name=NULL,
                               meta.data=NULL,
@@ -91,6 +93,7 @@ Matrix2ArchRArrow <- function(mat,
   return(paste0(name,".arrow"))
 }
 
+#' @export
 Matrix2ArchRProject <- function(mat,
                                 name=NULL,
                                 meta.data=NULL,
@@ -122,7 +125,7 @@ Matrix2ArchRProject <- function(mat,
 .loadRangeseRNA <- function(h5, name){
     seRNA <- import10xFeatureMatrix_(
       input = c(h5),
-      file_type = "10XH5",
+      input_type = "10XH5",
       names = c(name)
     )
     if(is.null(rowRanges(seRNA))){
@@ -142,6 +145,7 @@ Matrix2ArchRProject <- function(mat,
     return(seRNA)
 }
 
+#' @export
 createRNAarrow <- function(seRNA=NULL,
                            name = NULL
                           ){
