@@ -71,10 +71,11 @@ permutation_test <- function(
 	## Prepare data.
 	meta_data <- copy(sc_utils_obj@meta_data)
 
-	meta_data <- meta_data[,
-		c(sample_identity, cluster_identity),
-		with=FALSE
-	]
+  meta_data <- meta_data[
+    get(sample_identity) %in% c(sample_1, sample_2),
+    c(..sample_identity, ..cluster_identity)
+  ]
+
 
 
 	setnames(
