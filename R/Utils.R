@@ -11,10 +11,10 @@
 #'
 #' @rdname addBatchClusters
 #' @export
-addBatchClusters <- function(project, resolutions=0.5, ...){
+addBatchClusters <- function(project, resolutions=0.5, cluster_prefix, ...){
 
   for(resolution in resolutions){
-    project <- addClusters(project,resolution=resolution, name=glue::glue("{cluster_prefix}_{resolution}"), ...)
+    project <- addClusters(project,resolution=resolution, name=glue::glue("{cluster_prefix}{resolution}"), ...)
   }
   project
 }

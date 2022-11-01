@@ -39,7 +39,7 @@ FeaturePlotS <- function(project, useMatrix=NULL, assay=NULL, reduction=NULL, ..
   }else{
     stop("No existing reduction")
   }
-  p <- Seurat::FeaturePlot(object, reduction=reduction, slot=assay, ...)
+  p <- Seurat::FeaturePlot(object, reduction=reduction, ...)
   return(p)
 }
 

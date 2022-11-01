@@ -4,7 +4,7 @@
 \alias{addBatchClusters}
 \title{Single-Cell Utilities Constructor}
 \usage{
-addBatchClusters(project, resolutions = 0.5, ...)
+addBatchClusters(project, resolutions = 0.5, cluster_prefix, ...)
 }
 \arguments{
 \item{project}{ArchR project with meta-data}
