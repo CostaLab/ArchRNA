@@ -63,8 +63,9 @@ DotPlotS <- function(project, useMatrix=NULL, assay=NULL, ...){
   object <- PartialSeurat(project, useMatrix=useMatrix, assay=assay)
   p <- Seurat::DotPlot(object, assay="RNA", ...)
   return(p)
-
 }
+
+### can add mean or median
 
 #' @export
 VlnPlotS <- function(project, features=c(), useMatrix=NULL, assay=NULL, ...){
@@ -88,6 +89,9 @@ scProportionPlotS <- function(project,
                               pair=c("a", "b"),
                               logFile = ArchR::createLogFile("scProportionPlotS")
 ){
+
+#TODO:
+  #add checking the input parameters's validation
 
   prop_test <- sc_utils(project)
   #prop_test@meta_data$sample_identity = prop_test@meta_data[, condition]
@@ -114,41 +118,223 @@ VolcanoPlotS <- function(){
 }
 
 ##genebar
-FlipBarPlotS <- function(){
 
+#' @export
+FlipBarPlotS <- function(DF, top_n=10, name="", sort.val="desc", x.text.angle=90){
+    #Cluster,
+    #DF <- DF %>% dplyr::filter(Cluster == Cluster)
+    dfm <- as.data.frame(DF) %>% dplyr::slice_max(Log2FC, n=top_n) # %>% dplyr::mutate(updn = ifelse(Log2FC>0, "up", "down"))
+    p <- ggbarplot(dfm,
+              x = "name",
+              y = "Log2FC",
+              fill = "lightblue",         # change fill color by mpg_level
+              color = "white",            # Set bar border colors to white
+              palette = "jco",            # jco journal color palett. see ?ggpar
+              sort.val = sort.val,           # Sort the value in ascending order
+              sort.by.groups = FALSE,     # Don't sort inside each group
+              x.text.angle = 90,          # Rotate vertically x axis texts
+              ylab = "Log2FC",
+              xlab = FALSE,
+              legend.title = glue::glue("{name}")
+    )
+    p
 }
 
-GroupedBarPlotS <- function(){
+#' @export
+GroupedBarPlotS <- function(project, Cluster="Cluster", condition="Sample", cells=NULL){
   #each group is
   #proportions in each sample or condition in each cluster
-  #
+  #nCK124 = length(which(scrna$name == "CK124"))
+  CK124_nCells <- table(scrna$clusters[scrna$name=="CK124"])
+  clusters_seq = sort(unique(scrna$clusters))
+  for(i in clusters_seq){
+    if(is.na(CK124_nCells[as.character(i)])){
+        CK124_nCells[as.character(i)] = 0
+    }
+  }
+  CK124_nCells=CK124_nCells[order(as.numeric(names(CK124_nCells)))]
+
+  #CK124_nCells['23'] = 0
+  CK124_total_cells <- sum(CK124_nCells)
+  CK124_Prop <- round(100.0*CK124_nCells/CK124_total_cells, 3)
+
+  #CK124_Prop['23'] = 0
+  CK124_tbl <- as.table(cbind(CK124_nCells, CK124_Prop))
+
+  CK142_nCells <- table(scrna@meta.data$clusters[scrna$name=="CK142"])
+  for(i in 1:clusters_seq){
+    if(is.na(CK142_nCells[as.character(i)])){
+      CK142_nCells[as.character(i)] = 0
+    }
+  }
+  CK142_nCells=CK142_nCells[order(as.numeric(names(CK142_nCells)))]
+  CK142_total_cells <- sum(CK142_nCells)
+  CK142_Prop <- round(100.0*CK142_nCells/CK142_total_cells, 3)
+
+  CK142_tbl <- as.table(cbind(CK142_nCells, CK142_Prop))
+
+  tbl <- cbind(CK124_tbl, CK142_tbl)
+
+  suppressPackageStartupMessages(library(knitr))
+  suppressPackageStartupMessages(library(kableExtra))
+  suppressPackageStartupMessages(library(formattable))
+
+
+
+  #-------
+  library(data.table)
+  ptbl <- tbl[, c("CK124_Prop", "CK142_Prop")]/100
+  colnames(ptbl) <- c("CK124","CK142")
+  mtbl <- melt(t(ptbl))
+  colnames(mtbl) <- c("name", "cluster", "prop")
+  df = data.frame(mtbl)
+  ggplot(df, aes(x = name, y=prop, fill=name)) +
+                  facet_wrap(~cluster, scales = "free", ncol=4)  +
+                  scale_y_continuous(labels=scales::percent) +
+                  geom_bar(stat = "identity") +
+                  scale_fill_manual(values=c("#e41a1c","#4daf4a"))
+                  #scale_fill_manual(values=c("CK124" = "#e41a1c", "Trans9" = "#3
 }
 
-PropBarPlotS <- function(){
 
+
+#' @export
+PropBarPlotS <- function(project, Cluster="Cluster", condition="Sample"){
+
+  dfm = as.data.frame.table(table(as.vector(project@cellColData[, condition]), as.vector(project@cellColData[, Cluster]))) %>%
+                                                dplyr::mutate(proportion=Freq/sum(Freq)) %>%
+                                                dplyr::select(-c(Freq))
+  colnames(dfm) <- c(condition, Cluster, "proportion")
+
+  ggplot(dfm) +
+          aes(x=!!sym(Cluster), y=proportion,  fill = !!sym(condition)) +
+          geom_bar(position = "fill", stat = "identity") +
+          scale_y_continuous(labels=scales::percent)
 }
+
 
 ##
 DensityPlotS<- function(project){
 library(Nebulosa)
 }
 
-##
-VlnMatrixPlotS <- function(){
+
+
+
+
+RidgesMatrixPlotS <- function(project, features){
+}
+
+#' @export
+VlnMatrixPlotS <- function(project, Cluster="Cluster", features=NULL, useMatrix="GeneExpressionMatrix", show_cluster=T,leftmost_width=1.4){
+  ps <- VlnPlotS(project,  useMatrix=useMatrix, features = features, pt.size = 0, ncol = 4, group.by = Cluster, combine = FALSE)
+
+  len = length(ps)
+  p1 <- ps[[1]] + coord_flip() + NoLegend() + scale_fill_discrete(guide='none') +
+          theme_bw() +
+          theme(plot.title = element_text(angle = 90),
+                axis.title.x=element_blank(),
+                axis.text.x=element_blank(),
+                axis.ticks.x=element_blank(),
+                #axis.text.y=element_blank(),
+                axis.title.y=element_blank(),
+                #axis.ticks.y=element_blank(),
+                plot.margin = unit(c(0, 0, 0, 0), "cm"),
+                panel.grid.major = element_blank(),
+                panel.grid.minor = element_blank(),
+                panel.background = element_rect(colour = "black", size=1))
+  ps <- lapply(ps[2:len], function(x) x + coord_flip() + NoLegend() + scale_fill_discrete(guide='none') +
+          theme_bw() +
+          theme(plot.title = element_text(angle = 90),
+                axis.title.x=element_blank(),
+                axis.text.x=element_blank(),
+                axis.ticks.x=element_blank(),
+                axis.text.y=element_blank(),
+                axis.title.y=element_blank(),
+                #axis.ticks.y=element_blank(),
+                plot.margin = unit(c(0, 0, 0, 0), "cm"),
+                panel.grid.major = element_blank(),
+                panel.grid.minor = element_blank(),
+                panel.background = element_rect(colour = "black", size=1)))
+
+
+  p2 = cowplot::plot_grid(plotlist = ps, nrow=1, align = "h")
+  if(show_cluster){
+    return(cowplot::plot_grid(plotlist=c(list(p1), ps), align='h', nrow=1, rel_widths=c(leftmost_width, rep(1, len-1))))
+  }else{
+    return(cowplot::plot_grid(plotlist=c(list(p1+theme(axis.text.y=element_blank(),axis.ticks.y=element_blank())), ps),
+                                align='h',
+                                nrow=1,
+                                rel_widths=c(1, rep(1, len-1))))
+  }
 
 }
 
-##
-PiePlotS <- function(){
+BoxPlotS <- function(){
 
+}
+
+VlnboxPlotS <- function(){
+
+}
+
+## https://github.com/crazyhottommy/scATACutils
+## density plots for QC
+
+
+
+##
+# can have style like https://github.com/harbourlab/PieParty
+
+#' @export
+PiePlotS <- function(project, Cluster, condition=NULL, cols=ggsci::pal_igv()(51), round_n=2, ...){
+
+  if (is.null(condition)){
+      data = as.data.frame.table(table(project@cellColData[, Cluster])) %>% dplyr::mutate(proportion=round(100.0*Freq/sum(Freq), round_n))
+      colnames(data) <- c(Cluster, "cells", "proportion")
+      p <- ggpubr::ggpie(data, x="cells", label = paste0(data$proportion, '%'),
+                 fill = Cluster, palette = cols, ...) + theme(legend.direction='vertical', legend.position='right')
+
+  }else{
+      plist <- list()
+      conditions = unique(project@cellColData[, condition])
+      for(i in seq_along(conditions)){
+        cond = conditions[i]
+        meta = project@cellColData
+        idx = which(as.vector(meta[, condition]) == cond)
+        data = as.data.frame.table(table(meta[idx, Cluster])) %>% dplyr::mutate(proportion=round(100.0*Freq/sum(Freq), round_n))
+        colnames(data) <- c(Cluster, "cells", "proportion")
+        px <-ggpubr::ggpie(data, x="cells", label = paste0(data$proportion, '%'),
+                   fill = Cluster, palette = cols, ...) + ggtitle(cond)
+
+        plist[[cond]] <- px+theme(legend.position='none')
+      }
+      pl =ggpubr::ggpie(data, x="cells", fill=Cluster, palette=cols) + theme(legend.direction='vertical')
+      leg <- ggpubr::get_legend(pl)
+
+      p <- cowplot::plot_grid(plotlist=plist, ncol=1)
+      p <- p + ggpubr::as_ggplot(leg) + patchwork::plot_layout(widths = c(6, 1))
+  }
+  p
 }
 
 
 
 
 ## each Dot is a piePlots: Li's paper
+# x cluster, y features, pie proportions.
 PieMatrixPlotS <- function(){
 }
+
+
+## diffusion can show edges with igraph
+
+## kawaii layouts of a graph
+
+
+## velocity compatible
+
+
 
 ## high variable genes
 
@@ -163,7 +349,6 @@ clustreeS <- function(project, prefix="", suffix="",...){
   coldata = as.data.frame(project@cellColData)
   clustree(coldata, prefix=prefix, suffix=suffix, ...)
 }
-
 
 
 ## statistics

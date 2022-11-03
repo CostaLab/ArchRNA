@@ -15,6 +15,7 @@ Imports:
   Seurat,
   clustree,
   ggplot2,
+  ggpubr,
   cowplot,
   patchwork,
   parallel,

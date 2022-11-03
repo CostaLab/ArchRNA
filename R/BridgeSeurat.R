@@ -1,10 +1,14 @@
 
 ## Create a small seuratobject from ArchRProject
+##TODO:
+## select features from count matrix
+## select assay during the reading of getMatrixFromProject
 PartialSeurat <- function(project,
                           reducedDims=NULL,
                           embeddings=NULL,
                           useMatrix="GeneExpressionMatrix",
                           assay="data",
+                          features=NULL,
                           meta.data=T){
 
   includes = c()
@@ -50,10 +54,10 @@ PartialSeurat <- function(project,
                                        verbose=F)
 
   if("reducedDims" %in% includes){
-    object[[reducedDims]] <- Seurat::CreateDimReducObject(reduction, key=reducedDims)
+    object[[reducedDims]] <- Seurat::CreateDimReducObject(reduction, key=glue::glue("{reducedDims}_"))
   }
   if("embeddings" %in% includes){
-    object[[embeddings]] <- Seurat::CreateDimReducObject(as.matrix(embedd), key=embeddings)
+    object[[embeddings]] <- Seurat::CreateDimReducObject(as.matrix(embedd), key=glue::glue("{embeddings}_"))
   }
   gc()
   return(object)

@@ -27,7 +27,7 @@ RnaArchRProject <- function(inputFiles,
     createRNAarrow(seRNA, sampleNames[i])
     addGeneExpressionMatrix_(input = paste0(sampleNames[i],".arrow"),
                             seRNA = seRNA,
-                            chromSizes = getChromSizes(),
+                            #chromSizes = getChromSizes(),
                             matrixName=matrixName
     )
   }
@@ -87,7 +87,7 @@ Matrix2ArchRArrow <- function(mat,
       createRNAarrow(seRNA, name[x])
       addGeneExpressionMatrix_(input = paste0(name[x],".arrow"),
                                seRNA = seRNA,
-                               chromSizes = getChromSizes(),
+                               #chromSizes = getChromSizes(),
                                matrixName = matrixName
       )
   }
@@ -177,7 +177,7 @@ createRNAarrow <- function(seRNA=NULL,
 addGeneExpressionMatrix_ <- function(
   input = NULL,
   seRNA = NULL,
-  chromSizes = getChromSizes(input),
+  #chromSizes = getChromSizes(input),
   matrixName = "GeneExpressionMatrix",
   excludeChr = c("chrM", "chrY"),
   scaleTo = 10000,
@@ -193,16 +193,16 @@ addGeneExpressionMatrix_ <- function(
     ArrowFiles <- getArrowFiles(input)
     allCells <- rownames(getCellColData(input))
     outDir <- getOutputDirectory(input)
-    if(is.null(chromSizes)){
-      chromSizes <- getChromSizes(input)
-    }
+    #if(is.null(chromSizes)){
+    #  chromSizes <- getChromSizes(input)
+    #}
   }else if(inherits(input, "character")){
     outDir <- ""
     ArrowFiles <- input
     allCells <- NULL
-    if(is.null(chromSizes)){
-      chromSizes <- getChromSizes()
-    }
+    #if(is.null(chromSizes)){
+    #  chromSizes <- getChromSizes()
+    #}
   }else{
     stop("Error Unrecognized Input!")
   }
@@ -259,7 +259,7 @@ addGeneExpressionMatrix_ <- function(
 
   #Remove Input from args
   args$input <- NULL
-  args$chromSizes <- NULL
+  #args$chromSizes <- NULL
   args$strictMatch <- NULL
 
   #Run With Parallel or lapply
@@ -408,6 +408,7 @@ addGeneExpressionMat_ <- function(
         addRowSums = TRUE,
         addRowVarsLog2 = FALSE #add for integration analyses
       )
+      rm(matz, matc)
       gc()
     }, error = function(e){
 
@@ -437,6 +438,7 @@ addGeneExpressionMat_ <- function(
     o <- h5closeAll()
 
   }
+  rm(seRNA)
   ArrowFile
 }
 
