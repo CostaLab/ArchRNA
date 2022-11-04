@@ -27,8 +27,8 @@ DoHeatmapS <- function(project, useMatrix=NULL, assay=NULL, reduction=NULL, ...)
 
 
 #' @export
-FeaturePlotS <- function(project, useMatrix=NULL, assay=NULL, reduction=NULL, ...){
-  if(is.null(useMatrix)){
+FeaturePlotS <- function(project, features=NULL, useMatrix=NULL, assay=NULL, reduction=NULL, ...){
+  if(is.null(useMatrix) & all(features %ni% colnames(project@cellColData))){
     useMatrix = getAvailableMatrices(project)[1]
     warning(glue::glue("useMatrix is NULL, use first matrix {useMatrix}!"))
   }
@@ -39,7 +39,7 @@ FeaturePlotS <- function(project, useMatrix=NULL, assay=NULL, reduction=NULL, ..
   }else{
     stop("No existing reduction")
   }
-  p <- Seurat::FeaturePlot(object, reduction=reduction, ...)
+  p <- Seurat::FeaturePlot(object, reduction=reduction, features=features,  ...)
   return(p)
 }
 
