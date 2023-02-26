@@ -49,7 +49,7 @@ addDoubletScores_ <- function(
   threads = getArchRThreads(),
   force = FALSE,
   parallelParam = NULL,
-  verbose = TRUE,
+  verbose = FALSE,
   logFile = createLogFile("addDoubletScores")
   ){
 

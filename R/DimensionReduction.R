@@ -1,49 +1,87 @@
-addPCA <- function(project, useMatrix, assay){
-  #    total.variance <- sum(RowVar(x = object))
-  #  if (approx) {
-  #    npcs <- min(npcs, nrow(x = object) - 1)
-  #    pca.results <- irlba(A = t(x = object), nv = npcs, ...)
-  #    feature.loadings <- pca.results$v
-  #    sdev <- pca.results$d/sqrt(max(1, ncol(object) - 1))
-  #    if (weight.by.var) {
-  #      cell.embeddings <- pca.results$u %*% diag(pca.results$d)
-  #    } else {
-  #      cell.embeddings <- pca.results$u
-  #    }
-  #  } else {
-  #    npcs <- min(npcs, nrow(x = object))
-  #    pca.results <- prcomp(x = t(object), rank. = npcs, ...)
-  #    feature.loadings <- pca.results$rotation
-  #    sdev <- pca.results$sdev
-  #    if (weight.by.var) {
-  #      cell.embeddings <- pca.results$x
-  #    } else {
-  #      cell.embeddings <- pca.results$x / (pca.results$sdev[1:npcs] * sqrt(x = ncol(x = object) - 1))
-  #    }
-  #  }
-  #}
-  #rownames(x = feature.loadings) <- rownames(x = object)
-  #colnames(x = feature.loadings) <- paste0(reduction.key, 1:npcs)
-  #rownames(x = cell.embeddings) <- colnames(x = object)
-  #colnames(x = cell.embeddings) <- colnames(x = feature.loadings)
-  #reduction.data <- CreateDimReducObject(
-  #  embeddings = cell.embeddings,
-  #  loadings = feature.loadings,
-  #  assay = assay,
-  #  stdev = sdev,
-  #  key = reduction.key,
-  #  misc = list(total.variance = total.variance)
-  #)
-  gc()
-   return(0)
+#' addPCA
+#' add PCA
+#' @return project
+#' @importFrom stats prcomp
+#' @importFrom irlba irlba
+#' @importFrom assertthat assert_that
+#' @importFrom Matrix t
+#' @param project
+#' @param assay
+#' @param nPCs
+#' @param reduction.key
+#' @param seed
+#' @param approx
+#' @param verbose
+#' @rdname addPCA
+
+#' @export
+addPCA <- function(project,
+                    useMatrix="GeneExpressionMatrix",
+                    assay="data",
+                    nPCs = 50,
+                    name = "PCA",
+                    reduction.key = "PC_",
+                    seed = 1,
+                    approx = TRUE,
+                    verbose = FALSE,
+                    force = TRUE,
+                    ...) {
+  if (verbose) {
+    message("Adding PCA to project")
+  }
+  # Set seed
+  set.seed(seed)
+  # Get matrix
+  #assertthat::assert_that(assay %in% names(assays(seMtx)))
+  seMtx <- ArchR::getMatrixFromProject(project, useMatrix=useMatrix, useSeqnames = assay)
+  mat <- assay(seMtx)
+  rm(seMtx)
+
+  nPCs <- min(nPCs, nrow(x = mat) - 1)
+  # Calculate PCA
+  if (approx) {
+     PCs <- irlba(A = Matrix::t(x = mat), nv = nPCs, ...)$u
+  } else {
+     PCs <- prcomp(Matrix::t(mat), rank.=nPCs, ...)$x
+  }
+  rownames(PCs) <- colnames(mat)
+  colnames(PCs) <- paste0(reduction.key, 1:nPCs)
+  # Add PCs to project
+  project <- setDimRed(object = project, mtx = PCs, reduction.name = name, force = force, type="reducedDims")
+  return(project)
 }
 
 addICA <- function(project, useMatrix, assay){
   return(0)
 }
 
-addDiffusion <- function(project, useMatrix, assay){
-  return(0)
+#‘ addDiffusionMap
+#‘ add Diffusion Map
+#‘ @return project
+
+
+#' @importFrom destiny DiffusionMap
+#' @importFrom assertthat assert_that
+#' @rdname addDiffusionMap
+#' @export
+addDiffusionMap <- function(project,
+                            name='Diffusion',
+                            reduction.key="DM_",
+                            useReducedDims='PCA',
+                            nPCs=50,
+                            verbose=FALSE,
+                            force=TRUE,
+                            ...){
+  # Get ReducedDims
+  require(destiny)
+  assertthat::assert_that(useReducedDims %in% names(project@reducedDims ))
+  reducedDims <- getDimRed(project, useReducedDims)
+  dm <- DiffusionMap(data=reducedDims[, 1:min(nPCs, ncol(reducedDims))], verbose = verbose,  ...)
+  embedding <- destiny::as.data.frame(dm)[, c("DC1", "DC2")]
+  colnames(embedding) <- paste0(useReducedDims, "#", reduction.key, 1:2)
+  rownames(embedding) <- rownames(project@cellColData)
+  project <- setDimRed(object = project, mtx = embedding, reduction.name = name, force = force, type="embeddings", key=useReducedDims, nPCs=nPCs)
+  return(project)
 }
 
 

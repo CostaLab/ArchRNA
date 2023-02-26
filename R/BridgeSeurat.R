@@ -14,15 +14,32 @@ PartialSeurat <- function(project,
   includes = c()
   if(!is.null(useMatrix)){
     assertthat::assert_that(useMatrix %in% ArchR::getAvailableMatrices(project))
-    seMtx <- ArchR::getMatrixFromProject(project, useMatrix=useMatrix)
+    #seMtx <- ArchR::getMatrixFromProject(project, useMatrix=useMatrix)
+    #if(is.null(assay)){
+    #  warning(glue::glue("assay is NULL, use first assay {assay}!"))
+    #  assay=names(assays(seMtx))[1]
+    #}
+    #assertthat::assert_that(assay %in% names(assays(seMtx)))
+    #counts <- assays(seMtx)[[assay]]
+    #genes <- elementMetadata(seMtx)$name
+    #rownames(counts) <- genes
+
+    featureDF <- ArchR:::.getFeatureDF(head(getArrowFiles(project), 2), useMatrix)
     if(is.null(assay)){
+      assay=unique(featureDF$seqnames)[1]
       warning(glue::glue("assay is NULL, use first assay {assay}!"))
-      assay=names(assays(seMtx))[1]
     }
-    assertthat::assert_that(assay %in% names(assays(seMtx)))
-    counts <- assays(seMtx)[[assay]]
-    genes <- elementMetadata(seMtx)$name
-    rownames(counts) <- genes
+    if(is.null(features) | length(features)>20){ ## too many features get the whole matrix
+      warning(glue::glue("features is NULL, use all features!"))
+      seMtx <- ArchR::getMatrixFromProject(project, useMatrix=useMatrix, useSeqnames=assay)
+      counts <- assay(seMtx)
+      genes <- elementMetadata(seMtx)$name
+      rownames(counts) <- genes
+      rm(seMtx)
+    }else{
+      counts <- getMatrixFeatures(project, matrixName=useMatrix, seqname=assay, features=features )
+    }
+
     includes <- c(includes, "useMatrix")
   }else{
     ## there's no data useful in the Matrix

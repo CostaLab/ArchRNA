@@ -1,0 +1,12 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+vignettes/ArchRLogs
+vignettes/CTRL.arrow
+vignettes/ifnb
+vignettes/makeclean.sh
+vignettes/pbmc
+vignettes/pbmc10k_filt.h5
+vignettes/pbmc.arrow
+vignettes/STIM.arrow
+vignettes/tmp
+

@@ -3,6 +3,8 @@ progenyClusters <- function(project){
   return(project)
 }
 
+ #https://saezlab.github.io/decoupleR/articles/pw_sc.html
+
 generate_scrna_progeny <- function(scrna){
   ret_code = 0
   assertthat::assert_that(SPECIES == "Human" | SPECIES == "Mouse")

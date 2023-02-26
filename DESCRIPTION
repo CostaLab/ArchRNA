@@ -13,6 +13,7 @@ License: GPL (>= 2)
 Imports:
   ArchR (>= 1.0.1),
   Seurat,
+  decoupleR,
   clustree,
   ggplot2,
   ggpubr,
@@ -25,6 +26,7 @@ Imports:
   glue,
   irlba,
   dplyr,
+  destiny,
   tidyr,
   data.table,
   Nebulosa,

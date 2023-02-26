@@ -7,12 +7,14 @@
   return("UNKNOWN")
 }
 
+
 #' @export
 RnaArchRProject <- function(inputFiles,
                             sampleNames,
                             outputDirectory=NULL,
                             file_type = c("10X", "10XH5"),
-                            matrixName="GeneExpressionMatrix"
+                            matrixName="GeneExpressionMatrix",
+                            verbose=FALSE
 
 ){
   if(is.null(outputDirectory)){
@@ -23,17 +25,20 @@ RnaArchRProject <- function(inputFiles,
     if(typename %ni% file_type){
       stop("Error: Unknown 10 input type, options, 10X or 10XH5!")
     }
-    seRNA <- import10xFeatureMatrix_(inputFiles[i], typename, sampleNames[i])
-    createRNAarrow(seRNA, sampleNames[i])
+    seRNA <- verbose_func(import10xFeatureMatrix_(inputFiles[i], typename, sampleNames[i]), verbose)
+    verbose_func(createRNAarrow(seRNA, sampleNames[i]), verbose)
+
+    verbose_func(
     addGeneExpressionMatrix_(input = paste0(sampleNames[i],".arrow"),
                             seRNA = seRNA,
                             #chromSizes = getChromSizes(),
-                            matrixName=matrixName
+                            matrixName=matrixName),
+                            verbose
     )
   }
-  proj <- ArchRProject(ArrowFiles = paste0(sampleNames, ".arrow"),
+  proj <- verbose_func(ArchRProject(ArrowFiles = paste0(sampleNames, ".arrow"),
                        outputDirectory = outputDirectory,
-                       copyArrows = TRUE)
+                       copyArrows = TRUE), verbose)
 
   proj@cellMetadata[["genes"]] <- elementMetadata(seRNA)$name
 
@@ -47,11 +52,12 @@ Matrix2ArchRArrow <- function(mat,
                               name=NULL,
                               meta.data=NULL,
                               matrixName="GeneExpressionMatrix",
-                              addHashtag=TRUE
+                              addPrefixHashsymbol=TRUE,
+                              verbose=FALSE
 ){
 
 
-  if(!addHashtag){#use exisiting name
+  if(!addPrefixHashsymbol){#use exisiting name
     name = unique(stringr::str_split(colnames(mat), pattern = "#", simplify=TRUE)[,1])
     allname = stringr::str_split(colnames(mat), pattern = "#", simplify=TRUE)[,1]
   }else{
@@ -79,17 +85,18 @@ Matrix2ArchRArrow <- function(mat,
     idx = which(allname %in% name[x])
     seRNA = .importSparseFM_(spMat[, idx, drop=F], name=name[x])
       if(!is.null(meta.data)){
-        if(addHashtag){
+        if(addPrefixHashsymbol){
           rownames(meta.data) <- paste0(name[x], "#", rownames(meta.data))
         }
         colData(seRNA) <- DataFrame(meta.data[idx, ,drop=F])
       }
       createRNAarrow(seRNA, name[x])
-      addGeneExpressionMatrix_(input = paste0(name[x],".arrow"),
+      verbose_func(addGeneExpressionMatrix_(input = paste0(name[x],".arrow"),
                                seRNA = seRNA,
                                #chromSizes = getChromSizes(),
                                matrixName = matrixName
-      )
+      ), verbose)
+
   }
   ele <- elementMetadata(seRNA)
   rm(seRNA)
@@ -104,21 +111,24 @@ Matrix2ArchRProject <- function(mat,
                                 meta.data=NULL,
                                 outputDirectory=NULL,
                                 matrixName="GeneExpressionMatrix",
-                                addHashtag=TRUE
+                                addPrefixHashsymbol=TRUE,
+                                verbose=FALSE
 ){
 
   if(is.null(outputDirectory)){
     ArchR:::.logError("outputDirectory is NULL, please specify!")
   }
-  ele <- Matrix2ArchRArrow(mat=mat,
+  ele <-verbose_func( Matrix2ArchRArrow(mat=mat,
                     name=name,
                     meta.data=meta.data,
                     matrixName=matrixName,
-                    addHashtag=addHashtag)
+                    addPrefixHashsymbol=addPrefixHashsymbol)
+  , verbose)
 
-  proj <- ArchRProject(ArrowFiles = paste0(name, ".arrow"),
+  proj <-verbose_func(ArchRProject(ArrowFiles = paste0(name, ".arrow"),
                        outputDirectory = outputDirectory,
                        copyArrows = TRUE)
+  , verbose)
   proj@cellMetadata[["genes"]] <- ele$name
   gc()
   return(proj)
@@ -227,8 +237,8 @@ addGeneExpressionMatrix_ <- function(
   mb@x[mb@x > 0] <- 1
   nGenes <- Matrix::colSums(mb)
   rm(mb)
-  MitoRatio <- Matrix::colSums(assay(seRNA)[grep("^MT", rownames(assay(seRNA))),]) / nUMI
-  RiboRatio <- Matrix::colSums(assay(seRNA)[grep("^RP", rownames(assay(seRNA))),]) / nUMI
+  MitoRatio <- 100.0 * Matrix::colSums(assay(seRNA)[grep("^MT|^mt", rownames(assay(seRNA))),]) / nUMI
+  RiboRatio <- 100.0 * Matrix::colSums(assay(seRNA)[grep("^Rpl|^Rps|^RPL|^RPS", rownames(assay(seRNA))),]) / nUMI
   qcInfo <- DataFrame(nUMI = nUMI, nGenes = nGenes, MitoRatio = MitoRatio, RiboRatio = RiboRatio)
   colnames(qcInfo) <- paste0("Gex_", colnames(qcInfo))
 
