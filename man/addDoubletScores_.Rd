@@ -21,7 +21,7 @@ addDoubletScores_(
   threads = getArchRThreads(),
   force = FALSE,
   parallelParam = NULL,
-  verbose = TRUE,
+  verbose = FALSE,
   logFile = createLogFile("addDoubletScores")
 )
 }
